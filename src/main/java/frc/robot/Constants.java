@@ -33,10 +33,10 @@ public final class Constants {
               Units.inchesToMeters(4)), ROBOT_MASS);
 
       public static final Transform3d frontTagCamPose = new Transform3d(
+              Units.inchesToMeters(12.25),
               Units.inchesToMeters(0),
-              Units.inchesToMeters(0),
-              Units.inchesToMeters(0),
-              new Rotation3d(0, 45, 0));
+              Units.inchesToMeters(8.25),
+              new Rotation3d(0, Units.degreesToRadians(0), Units.degreesToRadians(0)));
       public static final Transform3d backTagCamPose = new Transform3d(
               Units.inchesToMeters(-7.5),
               Units.inchesToMeters(-11),
@@ -46,7 +46,7 @@ public final class Constants {
       // loop time to use
       public static final double maxSpeed = Units.feetToMeters(14.5);
 
-      public static final double WHEEL_DIAMETER = 3.036;
+      public static final double WHEEL_DIAMETER = 3;
       public static final double DRIVE_GEAR_RATIO = 4.714285714285714;
       public static final double DRIVE_ENCODER_RESOLUTION = 1.0;
 

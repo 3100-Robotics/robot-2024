@@ -5,10 +5,8 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.NamedCommands;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -51,7 +49,7 @@ public class RobotContainer {
         driverController::getLeftY,
         driverController::getLeftX,
         driverController::getRightX,
-        () -> false));
+        () -> SmartDashboard.getBoolean("is field oriented", false)));
 
     climber.setDefaultCommand(climber.setCommand(coDriverController::getLeftY));
 
@@ -67,10 +65,17 @@ public class RobotContainer {
 
   private void configureAutonomous() {
 
-    NamedCommands.registerCommand("shoot", Commands.sequence(
-            cobra.shootSpeaker(drive::getPose),
+    Command speakerCommand = Commands.sequence(
+            Commands.runOnce(() -> leds.setState(Constants.LEDStates.speaker)),
+            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
+            cobra.setPivotPosCommand(() -> 1.279),
+            cobra.setIndexerCommand(() -> 0.5),
             Commands.waitSeconds(0.5),
-            cobra.setSquisherAndIndexerCommand(() -> 0)));
+            cobra.setSquisherAndIndexerCommand(() -> 0),
+//            cobra.setPivotCommand(() -> Constants.cobraConstants.pivotCollectAngle),
+            Commands.runOnce(() -> leds.setState(Constants.LEDStates.speaker)));
+
+    NamedCommands.registerCommand("shoot", speakerCommand);
 
     NamedCommands.registerCommand("collect",
             cobra.cobraCollect(collector.collect(cobra::laserCan2Activated)));
@@ -83,6 +88,8 @@ public class RobotContainer {
     autoChooser.addOption("1 piece", onePieceRun);
     autoChooser.setDefaultOption("3 piece", threePiece);
     autoChooser.addOption("1.5 piece", one5Piece);
+
+    SmartDashboard.putData("auto chooser", autoChooser);
   }
 
   /**
@@ -143,14 +150,14 @@ public class RobotContainer {
 
     driverController.rightBumper().onTrue(ampCommands);
 
-    driverController.b().whileTrue(drive.driveToPose(new Pose2d(
-            new Translation2d(Constants.Field.ampX, Constants.Field.blueAmpY-1),
-//            new Translation2d(Constants.Field.ampX,
-//            DriverStation.getAlliance().isPresent() ?
-//                    (DriverStation.getAlliance().get().equals(DriverStation.Alliance.Blue) ?
-//                            Constants.Field.blueAmpY :
-//                            Constants.Field.redAmpY) : Constants.Field.blueAmpY),
-            new Rotation2d(0))).andThen(ampCommands));
+//    driverController.b().whileTrue(drive.driveToPose(new Pose2d(
+//            new Translation2d(Constants.Field.ampX, Constants.Field.blueAmpY-1),
+////            new Translation2d(Constants.Field.ampX,
+////            DriverStation.getAlliance().isPresent() ?
+////                    (DriverStation.getAlliance().get().equals(DriverStation.Alliance.Blue) ?
+////                            Constants.Field.blueAmpY :
+////                            Constants.Field.redAmpY) : Constants.Field.blueAmpY),
+//            new Rotation2d(0))).andThen(ampCommands));
 
     // speaker
     driverController.a().onTrue(Commands.sequence(
@@ -170,6 +177,9 @@ public class RobotContainer {
 //    coDriverController.a().onTrue(Commands.runOnce(() -> leds.setState(Constants.LEDStates.staticColor)));
 //    coDriverController.b().onTrue(Commands.runOnce(() -> leds.setState(Constants.LEDStates.off)));
 //    coDriverController.leftBumper().onTrue(Commands.runOnce(() -> leds.setState(Constants.LEDStates.rainbow)));
+
+    driverController.povLeft().onTrue(Commands.runOnce(() -> SmartDashboard.putBoolean("is field oriented", true)));
+    driverController.povRight().onTrue(Commands.runOnce(() -> SmartDashboard.putBoolean("is field oriented", false)));
   }
 
   /**
@@ -179,6 +189,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return Commands.none();
+    return autoChooser.getSelected();
   }
 }

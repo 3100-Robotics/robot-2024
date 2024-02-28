@@ -5,22 +5,22 @@
       "x": 0.7792735585471178,
       "y": 4.3245400776515845
     },
-    "rotation": 124.23320878659605
+    "rotation": 121.60750224624891
   },
   "command": {
     "type": "sequential",
     "data": {
       "commands": [
         {
-          "type": "named",
-          "data": {
-            "name": "shoot"
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "1.5 piece"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "shoot"
           }
         },
         {

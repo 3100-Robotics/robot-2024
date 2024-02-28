@@ -51,7 +51,7 @@ public class Climber extends SubsystemBase{
     }
 
     public Command setCommand(DoubleSupplier speed) {
-        return this.run(() -> set(-speed.getAsDouble()));
+        return this.run(() -> set(speed.getAsDouble()));
     }
 
     public Command setPosCommand(DoubleSupplier pos) {

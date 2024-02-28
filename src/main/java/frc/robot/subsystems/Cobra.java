@@ -241,7 +241,7 @@ public class Cobra extends SubsystemBase {
     }
 
     public Command setSquisherVelCommand(DoubleSupplier vel) {
-        return this.run(() -> setSquisherVel(vel.getAsDouble())).
+        return this.runOnce(() -> setSquisherVel(vel.getAsDouble())).
                 until(() -> squisherMotor.getClosedLoopError().getValueAsDouble() < cobraConstants.squisherSpeedTolerance);
     } 
 
@@ -276,7 +276,7 @@ public class Cobra extends SubsystemBase {
 //                        .raceWith(Commands.waitSeconds(0.5));// wait half a second more to make sure the note is fully in the cobra
 //        }
         return setPivotPosCommand(() -> cobraConstants.pivotCollectAngle).
-                andThen(Commands.waitSeconds(0.5)).
+                andThen(Commands.waitSeconds(0.2)).
                 andThen(setSquisherAndIndexerCommand(() -> -0.3)
                 .alongWith(intakeCollect))
                 .until(this::laserCan2Activated);
