@@ -218,10 +218,11 @@ public class Drive extends SubsystemBase {
                 new HolonomicPathFollowerConfig(
                         new PIDConstants(5.0, 0.0, 0.0),
                         // Translation PID constants
-                        new PIDConstants(drive.swerveController.config.headingPIDF.p,
+                        new PIDConstants(8,
                                 drive.swerveController.config.headingPIDF.i,
                                 drive.swerveController.config.headingPIDF.d),
                         1,
+
                         drive.swerveDriveConfiguration.getDriveBaseRadiusMeters(),
                         new ReplanningConfig(true, true)
                 ),

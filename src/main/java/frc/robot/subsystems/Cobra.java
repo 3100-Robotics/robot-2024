@@ -49,6 +49,8 @@ public class Cobra extends SubsystemBase {
 
     private final LinearFilter indexerCurrent = LinearFilter.movingAverage(20);
 
+    private double setpoint = 0;
+
     public Cobra() {
         TalonFXConfiguration pivotConfigs = new TalonFXConfiguration();
         TalonFXConfiguration squisherConfigs = new TalonFXConfiguration();
@@ -71,7 +73,7 @@ public class Cobra extends SubsystemBase {
         pivotConfigs.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 1;
         pivotConfigs.Slot0.kP = 20; // 20
         pivotConfigs.Slot0.kI = 2.8; // 2
-        pivotConfigs.Slot0.kD = 0.5;
+        pivotConfigs.Slot0.kD = 0.75;
         pivotConfigs.Slot0.kG = 0.32;
         pivotConfigs.Slot0.kS = 2.6;
         pivotConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
@@ -83,6 +85,7 @@ public class Cobra extends SubsystemBase {
         squisherConfigs.MotionMagic.MotionMagicAcceleration = cobraConstants.squisherMotorAcceleration;
         squisherConfigs.MotionMagic.MotionMagicCruiseVelocity = cobraConstants.squisherMotorVelocity;
         squisherConfigs.Slot0.kP = 0.5;
+        squisherConfigs.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 1;
 
         pivotMotor1.getConfigurator().apply(pivotConfigs);
 //        pivotMotor2.getConfigurator().apply(pivotConfigs);
@@ -129,6 +132,11 @@ public class Cobra extends SubsystemBase {
         SmartDashboard.putBoolean("laser can 1 activated", laserCan1Activated());
         SmartDashboard.putBoolean("laser can 2 activated", laserCan2Activated());
 
+        SmartDashboard.putNumber("pivot current draw", pivotMotor1.getSupplyCurrent().getValueAsDouble());
+        SmartDashboard.putNumber("squisher current draw", squisherMotor.getSupplyCurrent().getValueAsDouble());
+
+//        SmartDashboard.putNumber("pivot angle", pivotMotor1.get)
+
 //        SmartDashboard.putNumber("laser can 1 distance", laserCan1.getMeasurement().distance_mm);
 //        SmartDashboard.putNumber("laser can 2 distance", laserCan2.getMeasurement().distance_mm);
     }
@@ -169,6 +177,11 @@ public class Cobra extends SubsystemBase {
 
     public void setPivotPos(double pos) {
         pivotMotor1.setControl(new MotionMagicVoltage(pos));
+        setpoint = pos;
+    }
+
+    public double getSetpoint() {
+        return setpoint;
     }
 
     public void stopPivot() {
@@ -264,7 +277,7 @@ public class Cobra extends SubsystemBase {
     }
 
     public Command setSquisherAndIndexerCommand(DoubleSupplier speed) {
-        return this.run(() -> setSquisherAndIndexer(speed.getAsDouble()));
+        return this.runOnce(() -> setSquisherAndIndexer(speed.getAsDouble()));
     }
 
     public Command cobraCollect(Command intakeCollect) {
@@ -276,7 +289,7 @@ public class Cobra extends SubsystemBase {
 //                        .raceWith(Commands.waitSeconds(0.5));// wait half a second more to make sure the note is fully in the cobra
 //        }
         return setPivotPosCommand(() -> cobraConstants.pivotCollectAngle).
-                andThen(Commands.waitSeconds(0.2)).
+//                andThen(Commands.waitSeconds(0.2)).
                 andThen(setSquisherAndIndexerCommand(() -> -0.3)
                 .alongWith(intakeCollect))
                 .until(this::laserCan2Activated);

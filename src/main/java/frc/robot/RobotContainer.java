@@ -53,7 +53,7 @@ public class RobotContainer {
 
     climber.setDefaultCommand(climber.setCommand(coDriverController::getLeftY));
 
-    cobra.setDefaultCommand(cobra.setSquisherAndIndexerCommand(() -> 0));
+//    cobra.setDefaultCommand(cobra.setSquisherAndIndexerCommand(() -> 0));
     collector.setDefaultCommand(collector.setCommand(() -> 0.1));
 
 //    leds.setDefaultCommand(Commands.runOnce(() -> leds.setState(Constants.LEDStates.nothing), leds));
@@ -68,7 +68,7 @@ public class RobotContainer {
     Command speakerCommand = Commands.sequence(
             Commands.runOnce(() -> leds.setState(Constants.LEDStates.speaker)),
             cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-            cobra.setPivotPosCommand(() -> 1.279),
+            cobra.setPivotPosCommand(() -> 1.260),//0.226
             cobra.setIndexerCommand(() -> 0.5),
             Commands.waitSeconds(0.5),
             cobra.setSquisherAndIndexerCommand(() -> 0),
@@ -84,10 +84,13 @@ public class RobotContainer {
     Command onePieceRun = drive.createTrajectory("1 piece", false);
     Command one5Piece = drive.createTrajectory("1.5 piece", false);
     Command threePiece = drive.createTrajectory("3 piece", false);
+    Command one5PieceFront = drive.createTrajectory("1.5 front", false);
+
 
     autoChooser.addOption("1 piece", onePieceRun);
-    autoChooser.setDefaultOption("3 piece", threePiece);
-    autoChooser.addOption("1.5 piece", one5Piece);
+    autoChooser.addOption("3 piece", threePiece);
+    autoChooser.setDefaultOption("1.5 piece", one5Piece);
+    autoChooser.addOption("1.5 piece front", one5PieceFront);
 
     SmartDashboard.putData("auto chooser", autoChooser);
   }
@@ -128,27 +131,22 @@ public class RobotContainer {
 //              andThen(Commands.runOnce(() -> leds.setState(Constants.LEDStates.nothing))));
 
     // collect
-    driverController.leftBumper().whileTrue(Commands.runOnce(() -> leds.setState(Constants.LEDStates.collecting)).
-            andThen(
+    driverController.leftBumper().whileTrue(
                     Commands.parallel(
                             cobra.cobraCollect(collector.collect(cobra::laserCan2Activated)),
-                            drive.driveToNote(cobra::laserCan2Activated))).
-            andThen(Commands.runOnce(() -> leds.setState(Constants.LEDStates.nothing))));
+                            drive.driveToNote(cobra::laserCan2Activated)).
+                            andThen(cobra.setSquisherAndIndexerCommand(() -> 0)));
 
-    driverController.x().onTrue(cobra.cobraCollect(collector.collect(cobra::laserCan2Activated)));
+    driverController.x().onTrue(cobra.cobraCollect(collector.collect(cobra::laserCan2Activated)).
+            andThen(cobra.setSquisherAndIndexerCommand(() -> 0)));
 
     // amp
     Command ampCommands = Commands.sequence(
             Commands.runOnce(() -> leds.setState(Constants.LEDStates.amp)),
-            cobra.setPivotPosCommand(() -> 1.484),
-            cobra.setSquisherVelCommand(() -> 10),
-            cobra.setIndexerCommand(() -> 0.5),
-            Commands.waitSeconds(0.5),
-            cobra.setSquisherAndIndexerCommand(() -> 0),
-            cobra.setIndexerCommand(() -> Constants.cobraConstants.pivotCollectAngle),
-            Commands.runOnce(() -> leds.setState(Constants.LEDStates.nothing)));
+            cobra.setPivotPosCommand(() -> 1.487),
+            cobra.setSquisherVelCommand(() -> 10));
 
-    driverController.rightBumper().onTrue(ampCommands);
+    driverController.y().onTrue(ampCommands);
 
 //    driverController.b().whileTrue(drive.driveToPose(new Pose2d(
 //            new Translation2d(Constants.Field.ampX, Constants.Field.blueAmpY-1),
@@ -163,23 +161,27 @@ public class RobotContainer {
     driverController.a().onTrue(Commands.sequence(
             Commands.runOnce(() -> leds.setState(Constants.LEDStates.speaker)),
             cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-            cobra.setPivotPosCommand(() -> 1.279),
-            cobra.setIndexerCommand(() -> 0.5),
-            Commands.waitSeconds(0.5),
-            cobra.setSquisherAndIndexerCommand(() -> 0),
-            cobra.setPivotCommand(() -> Constants.cobraConstants.pivotCollectAngle),
-            Commands.runOnce(() -> leds.setState(Constants.LEDStates.speaker))));
+            cobra.setPivotPosCommand(() -> 1.260)));
 
-//    coDriverController.x().onTrue(Commands.runOnce(() -> shootingInSpeaker = false));
-//    coDriverController.y().onTrue(Commands.runOnce(() -> shootingInSpeaker = true));
+    driverController.b().onTrue(Commands.sequence(
+            Commands.runOnce(() -> leds.setState(Constants.LEDStates.speaker)),
+            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
+            cobra.setPivotPosCommand(() -> 1.226)));
 
     coDriverController.a().whileTrue(collector.setCommand(() -> 0.5));
-//    coDriverController.a().onTrue(Commands.runOnce(() -> leds.setState(Constants.LEDStates.staticColor)));
-//    coDriverController.b().onTrue(Commands.runOnce(() -> leds.setState(Constants.LEDStates.off)));
-//    coDriverController.leftBumper().onTrue(Commands.runOnce(() -> leds.setState(Constants.LEDStates.rainbow)));
+
 
     driverController.povLeft().onTrue(Commands.runOnce(() -> SmartDashboard.putBoolean("is field oriented", true)));
     driverController.povRight().onTrue(Commands.runOnce(() -> SmartDashboard.putBoolean("is field oriented", false)));
+
+//    driverController.b().onTrue(cobra.setPivotPosCommand(() -> (cobra.getSetpoint() - 0.01)));
+//    driverController.y().onTrue(cobra.setPivotPosCommand(() -> (cobra.getSetpoint() + 0.01)));
+
+    driverController.rightBumper().onTrue(Commands.sequence(
+            cobra.setIndexerCommand(() -> 0.5),
+            Commands.waitSeconds(0.75),
+            cobra.setSquisherAndIndexerCommand(() -> 0),
+            cobra.setPivotPosCommand(() -> Constants.cobraConstants.pivotCollectAngle)));
   }
 
   /**
