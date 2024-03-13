@@ -55,7 +55,7 @@ public class Cobra extends SubsystemBase {
     private double indexerSetpoint = 0;
     private double pivotSetpoint = 0;
 
-    SysIdRoutine routine = new SysIdRoutine(
+    SysIdRoutine pivotSYSID = new SysIdRoutine(
             new SysIdRoutine.Config(),
             new SysIdRoutine.Mechanism(this::setPivotVoltage, null, this)
     );
@@ -94,6 +94,7 @@ public class Cobra extends SubsystemBase {
         squisherConfigs.MotionMagic.MotionMagicAcceleration = cobraConstants.squisherMotorAcceleration;
         squisherConfigs.MotionMagic.MotionMagicCruiseVelocity = cobraConstants.squisherMotorVelocity;
         squisherConfigs.Slot0.kP = 0.5;
+        squisherConfigs.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 1;
 
         pivotMotor1.getConfigurator().apply(pivotConfigs);
 //        pivotMotor2.getConfigurator().apply(pivotConfigs);
@@ -105,7 +106,7 @@ public class Cobra extends SubsystemBase {
 
         pivotEncoderConfigs.MagnetSensor.MagnetOffset = -0.169189453125;
         pivotEncoderConfigs.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-        pivotEncoderConfigs.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Unsigned_0To1;
+        pivotEncoderConfigs.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Unsigned_0To1; // TODO: make this 0-360
 
         pivotEncoder.getConfigurator().apply(pivotEncoderConfigs);
 
@@ -144,8 +145,6 @@ public class Cobra extends SubsystemBase {
         SmartDashboard.putBoolean("laser can 1 activated", laserCan1Activated());
         SmartDashboard.putBoolean("laser can 2 activated", laserCan2Activated());
 
-//        SmartDashboard.putNumber("laser can 1 distance", laserCan1.getMeasurement().distance_mm);
-//        SmartDashboard.putNumber("laser can 2 distance", laserCan2.getMeasurement().distance_mm);
     }
 
     public void logger() {
@@ -323,17 +322,21 @@ public class Cobra extends SubsystemBase {
                 .andThen(setSquisherAndIndexerCommand(() -> 0));
     }
 
-    public Command ShootSpeaker(Supplier<Pose2d> robotPose) {
+    public Command shootSpeaker(Supplier<Pose2d> robotPose) {
         return Commands.sequence(
                         Commands.runOnce(() -> setSquisherVel(cobraConstants.squisherShootSpeed)),
                         setPivotPosCommand(() -> { // get the angle for the pivot
                             Translation2d speakerPose;
                             if (DriverStation.getAlliance().isPresent()) {
                                 if (DriverStation.getAlliance().get().equals(DriverStation.Alliance.Blue)){
-                                    speakerPose = new Translation2d(0, Constants.Field.blueSpeakerY);
+                                    speakerPose = new Translation2d(
+                                            Constants.Field.speakerX,
+                                            Constants.Field.blueSpeakerY);
                                 }
                                 else{
-                                    speakerPose = new Translation2d(0, Constants.Field.redSpeakerY);
+                                    speakerPose = new Translation2d(
+                                            Constants.Field.speakerX,
+                                            Constants.Field.redSpeakerY);
                                 }
                             }
                             else {
@@ -345,7 +348,7 @@ public class Cobra extends SubsystemBase {
                             return Math.tan(height/distanceFromSpeaker);
                         }),
                         Commands.waitUntil(this::atSquisherSetpoint),
-                        setIndexerCommand(() -> 0.5).deadlineWith(Commands.waitSeconds(0.5)));
+                        setIndexerCommand(() -> 0.5));
     }
 
     public Command scoreAmp() {

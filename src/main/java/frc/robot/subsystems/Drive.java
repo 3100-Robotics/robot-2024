@@ -1,6 +1,8 @@
 package frc.robot.subsystems;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
@@ -14,7 +16,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Camera;
@@ -41,6 +42,7 @@ public class Drive extends SubsystemBase {
     Camera frontTagCam;
     Camera backTagCam;
 
+    Boolean isShootingSpeaker = false;
 
     public Drive(Camera gamePieceCam, Camera frontTagCam, Camera backTagCam) {
         this.gamePieceCam = gamePieceCam;
@@ -72,9 +74,9 @@ public class Drive extends SubsystemBase {
 
         drive.setHeadingCorrection(false);
         drive.setCosineCompensator(false);
+        drive.pushOffsetsToControllers();
 
         defineAutoBuilder();
-        SmartDashboard.putNumber("number", drive.getSwerveController().config.maxAngularVelocity);
     }
 
     @Override
@@ -92,13 +94,13 @@ public class Drive extends SubsystemBase {
                  camPose.timestampSeconds);
 		 }
         
-         Optional<EstimatedRobotPose> backResult = backTagCam.getPose(drive.getPose());
-         if (backResult.isPresent()) {
-		 	EstimatedRobotPose camPose = backResult.get();
-		 	drive.addVisionMeasurement(
-                 camPose.estimatedPose.toPose2d(),
-                 camPose.timestampSeconds);
-		 }
+//         Optional<EstimatedRobotPose> backResult = backTagCam.getPose(drive.getPose());
+//         if (backResult.isPresent()) {
+//		 	EstimatedRobotPose camPose = backResult.get();
+//		 	drive.addVisionMeasurement(
+//                 camPose.estimatedPose.toPose2d(),
+//                 camPose.timestampSeconds);
+//		 }
     }
 
     public Rotation2d getRoll() {
@@ -159,13 +161,13 @@ public class Drive extends SubsystemBase {
                       Math.min(angle*-driveConstants.autoCollectTurnP, driveConstants.autoCollectMaxTurnVel),
                       false);
           }
-      }).until(collected).finallyDo(() -> drive(new Translation2d(0, 0), 0, false));
+      }).until(collected);
   }
 
     public Command driveToPose(Pose2d pose) {
         // Create the constraints to use while pathfinding
         PathConstraints constraints = new PathConstraints(
-                drive.getMaximumVelocity(), 4.0,
+                0.5, 4.0,
                 drive.getMaximumAngularVelocity(), Units.degreesToRadians(720));
 
         // Since AutoBuilder is configured, we can use it to build pathfinding commands
@@ -191,10 +193,14 @@ public class Drive extends SubsystemBase {
       Translation2d speakerPose;
       if (DriverStation.getAlliance().isPresent()) {
           if (DriverStation.getAlliance().get().equals(DriverStation.Alliance.Blue)){
-              speakerPose = new Translation2d(0, Constants.Field.blueSpeakerY);
+              speakerPose = new Translation2d(
+                      Constants.Field.speakerX,
+                      Constants.Field.blueSpeakerY);
           }
           else{
-              speakerPose = new Translation2d(0, Constants.Field.redSpeakerY);
+              speakerPose = new Translation2d(
+                      Constants.Field.speakerX,
+                      Constants.Field.redSpeakerY);
           }
       }
       else {
@@ -207,6 +213,41 @@ public class Drive extends SubsystemBase {
       return shooterVel.plus(negVel).getAngle().getDegrees();
     }
 
+    public Command setShootingStatus(Boolean isShooting) {
+      return this.runOnce(() -> isShootingSpeaker = isShooting);
+    }
+
+    private Optional<Rotation2d> autoRotationOverride() {
+      if (isShootingSpeaker) {
+          Pose2d pose = drive.getPose();
+
+          Translation2d speakerPose;
+          if (DriverStation.getAlliance().isPresent()) {
+              if (DriverStation.getAlliance().get().equals(DriverStation.Alliance.Blue)){
+                  speakerPose = new Translation2d(
+                          Constants.Field.speakerX,
+                          Constants.Field.blueSpeakerY);
+              }
+              else{
+                  speakerPose = new Translation2d(
+                          Constants.Field.speakerX,
+                          Constants.Field.redSpeakerY);
+              }
+          }
+          else {
+              speakerPose = new Translation2d(0, 0);
+          }
+
+          Pose2d relativePose = pose.relativeTo(new Pose2d(speakerPose, new Rotation2d()));
+
+          double desiredRobotAngle = Math.tan(relativePose.getY()/relativePose.getX());
+
+          return Optional.of(new Rotation2d(desiredRobotAngle));
+      }
+
+      return Optional.empty();
+    }
+
     public void defineAutoBuilder() {
         AutoBuilder.configureHolonomic(
                 this::getPose, // Robot pose supplier
@@ -216,27 +257,28 @@ public class Drive extends SubsystemBase {
                 new HolonomicPathFollowerConfig(
                         new PIDConstants(5.0, 0.0, 0.0),
                         // Translation PID constants
-                        new PIDConstants(0, 0, 0), // path planner isn't allowed to control the rotation
-                        driveConstants.maxSpeed,
+                        new PIDConstants(drive.swerveController.config.headingPIDF.p,
+                                drive.swerveController.config.headingPIDF.i,
+                                drive.swerveController.config.headingPIDF.d),
+                        1,
                         drive.swerveDriveConfiguration.getDriveBaseRadiusMeters(),
                         new ReplanningConfig(true, true)
                 ),
                 () -> {var alliance = DriverStation.getAlliance();
                     return alliance.filter(value -> value == DriverStation.Alliance.Red).isPresent();},
                 this);
+        PPHolonomicDriveController.setRotationTargetOverride(this::autoRotationOverride);
 	}
 
     public Command createTrajectory(String pathName, boolean setOdomToStart) {
-        // Load the path you want to follow using its name in the GUI
-        PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
 
-        if (setOdomToStart)
-        {
-            resetOdometry(new Pose2d(path.getPoint(0).position, getYaw()));
-        }
+//        if (setOdomToStart)
+//        {
+//            resetOdometry(new Pose2d(path.getPoint(0).position, getYaw()));
+//        }
 
         // Create a path following command using AutoBuilder. This will also trigger event markers.
-        return AutoBuilder.followPath(path);
+        return new PathPlannerAuto(pathName);
 	}
 
     public Command loadChoreoTrajectory(String pathName, Boolean setOdomToStart) {

@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -41,6 +42,8 @@ public class LEDs extends SubsystemBase {
         updateAnimation();
 
         led.setData(ledBuffer);
+
+        SmartDashboard.putData("leds", this);
     }
 
     /**
@@ -87,41 +90,46 @@ public class LEDs extends SubsystemBase {
     }
 
     private void updateAnimation() {
-        if (!state.animated) {
-            setColorRGB(state.r, state.g, state.b);
-        }
-        else {
-            if (state.animationType.equals("flash")) {
-                if (Timer.getFPGATimestamp() - lastAnimUpdate >= state.time) {
-                    lastAnimUpdate = Timer.getFPGATimestamp();
-                    lightsOn = !lightsOn;
+        if (!state.isAnimated()) {
+            setColorRGB(state.getR(), state.getG(), state.getB());
+        } else {
+            switch (state.getAnimationType()) {
+                case "flash" -> {
                     if (lightsOn) {
-                        setColorRGB(state.r, state.g, state.b);
+                        setColorRGB(state.getR(), state.getG(), state.getB());
                     } else {
                         setColorRGB(0, 0, 0);
                     }
+                    if (Timer.getFPGATimestamp() - lastAnimUpdate >= state.getAnimationTime()) {
+                        lastAnimUpdate = Timer.getFPGATimestamp();
+                        lightsOn = !lightsOn;
+                    }
                 }
-            }
-            else if (state.animationType.equals("rainbow")) {
-                lastAnimUpdate = Timer.getFPGATimestamp();
-                rainbowH += 1;
-                if (rainbowH >= 256) {
-                    rainbowH = 0;
-                }
-                setColorHSV(rainbowH, rainbowS, rainbowV);
-            }
-            else if (state.animationType.equals("timed color")) {
-                setColorRGB(state.r, state.g, state.b);
-                if (Timer.getFPGATimestamp() - lastAnimUpdate >= state.time) {
+                case "rainbow" -> {
                     lastAnimUpdate = Timer.getFPGATimestamp();
-                    setState(Constants.LEDStates.nothing);
+                    rainbowH += 1;
+                    if (rainbowH >= 256) {
+                        rainbowH = 0;
+                    }
+                    setColorHSV(rainbowH, rainbowS, rainbowV);
+                }
+                case "timed color" -> {
+                    setColorRGB(state.getR(), state.getG(), state.getB());
+                    if (Timer.getFPGATimestamp() - lastAnimUpdate >= state.getAnimationTime()) {
+                        lastAnimUpdate = Timer.getFPGATimestamp();
+                        setStateNonCommand(Constants.LEDStates.nothing);
+                    }
                 }
             }
         }
     }
 
-    public void setState(Constants.LEDStates state) {
+    public void setStateNonCommand(Constants.LEDStates state) {
         this.state = state;
+    }
+
+    public Command setState(Constants.LEDStates state) {
+        return this.runOnce(() -> this.state = state);
     }
 }
 

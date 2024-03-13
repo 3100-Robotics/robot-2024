@@ -6,6 +6,7 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.climberConstants;
@@ -50,8 +51,8 @@ public class Climber extends SubsystemBase{
         climberMotor1.stopMotor();
     }
 
-    public Command setCommand(DoubleSupplier speed) {
-        return this.run(() -> set(-speed.getAsDouble()));
+    public Command runClimberWithJoysticks(DoubleSupplier speed) {
+        return this.run(() -> set(MathUtil.applyDeadband(speed.getAsDouble(), 0.05)));
     }
 
     public Command setPosCommand(DoubleSupplier pos) {
