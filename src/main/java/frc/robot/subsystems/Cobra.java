@@ -17,6 +17,7 @@ import com.revrobotics.SparkPIDController;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -150,6 +151,10 @@ public class Cobra extends SubsystemBase {
     public void logger() {
         var voltageThing = pivotMotor1.getSupplyVoltage();
 
+    }
+
+    public Command getSysIDCommand() {
+        return pivotSYSID.quasistatic(SysIdRoutine.Direction.kForward);
     }
 
     public Boolean laserCan2Activated() {
@@ -345,7 +350,7 @@ public class Cobra extends SubsystemBase {
                             double distanceFromSpeaker = speakerPose.getDistance(robotPose.get().getTranslation());
                             double height = Constants.Field.speakerZ - 0.48;
 
-                            return Math.tan(height/distanceFromSpeaker);
+                            return Units.radiansToRotations(Math.tan(height/distanceFromSpeaker));
                         }),
                         Commands.waitUntil(this::atSquisherSetpoint),
                         setIndexerCommand(() -> 0.5));

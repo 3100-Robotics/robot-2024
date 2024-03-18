@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -62,34 +63,50 @@ public class RobotContainer {
     // Configure the trigger bindings
     configureBindings();
     configureAutonomous();
+
+    SignalLogger.setPath("/media/sda1/");
   }
 
   private void configureAutonomous() {
-//    Command speakerCommand = Commands.sequence(
-//            leds.setState(Constants.LEDStates.speaker),
-//            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-//            cobra.setPivotPosCommand(() -> 1.279),
+    Command speakerCommand  = Commands.sequence(
+            leds.setState(Constants.LEDStates.speaker),
+            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
+            cobra.setPivotPosCommand(() -> 0.77));
 //            cobra.setIndexerCommand(() -> 0.5),
 //            Commands.waitSeconds(0.5),
 //            cobra.setSquisherAndIndexerCommand(() -> 0),
 //            leds.setState(Constants.LEDStates.nothing));
 
-    Command speakerCommand = Commands.sequence(
-            drive.setShootingStatus(true),
-            leds.setState(Constants.LEDStates.speaker),
-            cobra.setSquisherCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-            cobra.setPivotPosCommand(drive::speakerShootAngle),
+    Command prepShootCommand = Commands.sequence(
             cobra.setIndexerCommand(() -> 0.5),
-            Commands.waitSeconds(0.75),
+            Commands.waitSeconds(0.5),
             cobra.setSquisherAndIndexerCommand(() -> 0),
-            cobra.setPivotPosCommand(() -> Constants.cobraConstants.pivotCollectAngle),
-            leds.setState(Constants.LEDStates.nothing),
-            drive.setShootingStatus(false));
+            leds.setState(Constants.LEDStates.nothing));
+
+//    Command speakerCommand = Commands.sequence(
+//            drive.setShootingStatus(true),
+//            leds.setState(Constants.LEDStates.speaker),
+//            cobra.setSquisherCommand(() -> Constants.cobraConstants.squisherShootSpeed),
+//            cobra.setPivotPosCommand(drive::speakerShootAngle),
+//            cobra.setIndexerCommand(() -> 0.5),
+//            Commands.waitSeconds(0.75),
+//            cobra.setSquisherAndIndexerCommand(() -> 0),
+//            cobra.setPivotPosCommand(() -> Constants.cobraConstants.pivotCollectAngle),
+//            leds.setState(Constants.LEDStates.nothing),
+//            drive.setShootingStatus(false));
 
     NamedCommands.registerCommand("shoot", speakerCommand);
 
+    NamedCommands.registerCommand("shoot prep", prepShootCommand);
+
     NamedCommands.registerCommand("collect",
             cobra.cobraCollect(collector.collect(cobra::laserCan2Activated)));
+
+    Command twoPiece = drive.loadChoreoTrajectory("2 piece", true);
+    autoChooser.addOption("2 piece", twoPiece);
+
+    Command driveAuto = drive.loadChoreoTrajectory("drive", true);
+    autoChooser.addOption("drive", driveAuto);
 
     SmartDashboard.putData(autoChooser);
   }
@@ -123,7 +140,7 @@ public class RobotContainer {
     // amp
     Command ampCommands = Commands.sequence(
             leds.setState(Constants.LEDStates.amp),
-            cobra.setPivotPosCommand(() -> 1.487),
+            cobra.setPivotPosCommand(() -> 0.98),
             cobra.setSquisherVelCommand(() -> 10));
 
     driverController.y().onTrue(ampCommands);
@@ -141,7 +158,7 @@ public class RobotContainer {
     driverController.a().onTrue(Commands.sequence(
             leds.setState(Constants.LEDStates.speaker),
             cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-            cobra.setPivotPosCommand(() -> 1.260)));
+            cobra.setPivotPosCommand(() -> 0.77)));
 
     // execute speaker or amp
     driverController.rightBumper().onTrue(Commands.sequence(
@@ -162,7 +179,13 @@ public class RobotContainer {
     driverController.povLeft().onTrue(Commands.runOnce(() -> SmartDashboard.putBoolean("is field oriented", true)));
     driverController.povRight().onTrue(Commands.runOnce(() -> SmartDashboard.putBoolean("is field oriented", false)));
 
-
+//    coDriverController.rightBumper().whileTrue(cobra.setIndexerCommand(() -> -0.3));
+    coDriverController.rightBumper().whileTrue(Commands.sequence(
+            Commands.runOnce(SignalLogger::start),
+            Commands.waitSeconds(0.2),
+            cobra.getSysIDCommand(),
+            Commands.waitSeconds(0.2),
+            Commands.runOnce(SignalLogger::stop)));
   }
 
   /**

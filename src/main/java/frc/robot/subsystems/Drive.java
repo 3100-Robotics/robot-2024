@@ -260,9 +260,9 @@ public class Drive extends SubsystemBase {
                         new PIDConstants(drive.swerveController.config.headingPIDF.p,
                                 drive.swerveController.config.headingPIDF.i,
                                 drive.swerveController.config.headingPIDF.d),
-                        1,
+                        0.5,
                         drive.swerveDriveConfiguration.getDriveBaseRadiusMeters(),
-                        new ReplanningConfig(true, true)
+                        new ReplanningConfig(false, false)
                 ),
                 () -> {var alliance = DriverStation.getAlliance();
                     return alliance.filter(value -> value == DriverStation.Alliance.Red).isPresent();},
