@@ -100,7 +100,7 @@ public final class Constants {
         public static final double pivotGearRatio = 61.5385;
         public static final double indexerGearRatio = 12 * 1.125;
 
-        public static final double pivotCollectAngle = 0.427;
+        public static final double pivotCollectAngle = 0.93;
         public static final double pivotFrontSubwooferAngle = 0.76;
         public static final double pivotBackSubwooferAngle = 0.92;
         public static final double pivotAmpAngle = 0.97;

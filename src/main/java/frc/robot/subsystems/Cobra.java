@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import au.grapplerobotics.ConfigurationFailedException;
 import au.grapplerobotics.LaserCan;
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
@@ -81,11 +82,11 @@ public class Cobra extends SubsystemBase {
         pivotConfigs.MotionMagic.MotionMagicAcceleration = cobraConstants.pivotMotorAcceleration;
         pivotConfigs.MotionMagic.MotionMagicCruiseVelocity = cobraConstants.pivotMotorVelocity;
         pivotConfigs.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 1;
-        pivotConfigs.Slot0.kP = 32; // 20
-        pivotConfigs.Slot0.kI = 10; // 2
-        pivotConfigs.Slot0.kD = 3;
-        pivotConfigs.Slot0.kG = 0.2;
-        pivotConfigs.Slot0.kV = 0;
+        pivotConfigs.Slot0.kP = 20; // 20
+        pivotConfigs.Slot0.kI = 2.8; // 2
+        pivotConfigs.Slot0.kD = 0.75;
+        pivotConfigs.Slot0.kG = 0.32;
+        pivotConfigs.Slot0.kS = 2.6;
         pivotConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
         squisherConfigs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
@@ -105,7 +106,7 @@ public class Cobra extends SubsystemBase {
 
         CANcoderConfiguration pivotEncoderConfigs = new CANcoderConfiguration();
 
-        pivotEncoderConfigs.MagnetSensor.MagnetOffset = -0.169189453125;
+        pivotEncoderConfigs.MagnetSensor.MagnetOffset = 0.339;;
         pivotEncoderConfigs.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         pivotEncoderConfigs.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Unsigned_0To1; // TODO: make this 0-360
 
@@ -146,15 +147,22 @@ public class Cobra extends SubsystemBase {
         SmartDashboard.putBoolean("laser can 1 activated", laserCan1Activated());
         SmartDashboard.putBoolean("laser can 2 activated", laserCan2Activated());
 
+        SignalLogger.writeString("sysid-test-state", pivotSYSID.toString());
     }
-
-    public void logger() {
-        var voltageThing = pivotMotor1.getSupplyVoltage();
-
-    }
-
-    public Command getSysIDCommand() {
+    public Command sysidForwardStatic() {
         return pivotSYSID.quasistatic(SysIdRoutine.Direction.kForward);
+    }
+
+    public Command sysidReverseStatic() {
+        return pivotSYSID.quasistatic(SysIdRoutine.Direction.kReverse);
+    }
+
+    public Command sysidForwardDynamic() {
+        return pivotSYSID.dynamic(SysIdRoutine.Direction.kForward);
+    }
+
+    public Command sysidReverseDynamic() {
+        return pivotSYSID.dynamic(SysIdRoutine.Direction.kReverse);
     }
 
     public Boolean laserCan2Activated() {

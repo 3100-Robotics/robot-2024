@@ -71,7 +71,7 @@ public class RobotContainer {
     Command speakerCommand  = Commands.sequence(
             leds.setState(Constants.LEDStates.speaker),
             cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-            cobra.setPivotPosCommand(() -> 0.77));
+            cobra.setPivotPosCommand(() -> 1.260));
 //            cobra.setIndexerCommand(() -> 0.5),
 //            Commands.waitSeconds(0.5),
 //            cobra.setSquisherAndIndexerCommand(() -> 0),
@@ -140,7 +140,7 @@ public class RobotContainer {
     // amp
     Command ampCommands = Commands.sequence(
             leds.setState(Constants.LEDStates.amp),
-            cobra.setPivotPosCommand(() -> 0.98),
+            cobra.setPivotPosCommand(() -> 1.487),
             cobra.setSquisherVelCommand(() -> 10));
 
     driverController.y().onTrue(ampCommands);
@@ -158,7 +158,7 @@ public class RobotContainer {
     driverController.a().onTrue(Commands.sequence(
             leds.setState(Constants.LEDStates.speaker),
             cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-            cobra.setPivotPosCommand(() -> 0.77)));
+            cobra.setPivotPosCommand(() -> 1.260)));
 
     // execute speaker or amp
     driverController.rightBumper().onTrue(Commands.sequence(
@@ -173,19 +173,23 @@ public class RobotContainer {
 //            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
 //            cobra.setPivotPosCommand(() -> 1.226)));
 
-    coDriverController.a().whileTrue(collector.setCommand(() -> 0.5));
+//    coDriverController.a().whileTrue(collector.setCommand(() -> 0.5));
 
 
     driverController.povLeft().onTrue(Commands.runOnce(() -> SmartDashboard.putBoolean("is field oriented", true)));
     driverController.povRight().onTrue(Commands.runOnce(() -> SmartDashboard.putBoolean("is field oriented", false)));
 
 //    coDriverController.rightBumper().whileTrue(cobra.setIndexerCommand(() -> -0.3));
-    coDriverController.rightBumper().whileTrue(Commands.sequence(
-            Commands.runOnce(SignalLogger::start),
-            Commands.waitSeconds(0.2),
-            cobra.getSysIDCommand(),
-            Commands.waitSeconds(0.2),
-            Commands.runOnce(SignalLogger::stop)));
+    coDriverController.rightBumper().onTrue(
+            Commands.runOnce(SignalLogger::start));
+
+    coDriverController.a().whileTrue(cobra.sysidForwardStatic());
+    coDriverController.b().whileTrue(cobra.sysidReverseStatic());
+    coDriverController.x().whileTrue(cobra.sysidForwardDynamic());
+    coDriverController.y().whileTrue(cobra.sysidReverseDynamic());
+
+    coDriverController.leftBumper().onTrue(
+            Commands.runOnce(SignalLogger::stop));
   }
 
   /**

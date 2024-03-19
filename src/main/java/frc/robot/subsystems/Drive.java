@@ -86,21 +86,21 @@ public class Drive extends SubsystemBase {
     }
 
     private void updatePose() {
-         Optional<EstimatedRobotPose> frontResult = frontTagCam.getPose(drive.getPose());
-         if (frontResult.isPresent()) {
-		 	EstimatedRobotPose camPose = frontResult.get();
-		 	drive.addVisionMeasurement(
-                 camPose.estimatedPose.toPose2d(),
-                 camPose.timestampSeconds);
-		 }
+        //  Optional<EstimatedRobotPose> frontResult = frontTagCam.getPose(drive.getPose());
+        //  if (frontResult.isPresent()) {
+		//  	EstimatedRobotPose camPose = frontResult.get();
+		//  	drive.addVisionMeasurement(
+        //          camPose.estimatedPose.toPose2d(),
+        //          camPose.timestampSeconds);
+		//  }
         
-//         Optional<EstimatedRobotPose> backResult = backTagCam.getPose(drive.getPose());
-//         if (backResult.isPresent()) {
-//		 	EstimatedRobotPose camPose = backResult.get();
-//		 	drive.addVisionMeasurement(
-//                 camPose.estimatedPose.toPose2d(),
-//                 camPose.timestampSeconds);
-//		 }
+        Optional<EstimatedRobotPose> backResult = backTagCam.getPose(drive.getPose());
+        if (backResult.isPresent()) {
+		 	EstimatedRobotPose camPose = backResult.get();
+		 	drive.addVisionMeasurement(
+                camPose.estimatedPose.toPose2d(),
+                camPose.timestampSeconds);
+		 }
     }
 
     public Rotation2d getRoll() {
