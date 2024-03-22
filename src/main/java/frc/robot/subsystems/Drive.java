@@ -74,15 +74,15 @@ public class Drive extends SubsystemBase {
         drive.pushOffsetsToControllers();
 
         defineAutoBuilder();
-        SmartDashboard.putNumber("number", drive.getSwerveController().config.maxAngularVelocity);
+//        SmartDashboard.putNumber("number", drive.getSwerveController().config.maxAngularVelocity);
     }
 
     @Override
     public void periodic() {
         updatePose();
         drive.updateOdometry();
-        SmartDashboard.putNumber("drive pose/x", drive.getPose().getX());
-        SmartDashboard.putNumber("drive pose/y", drive.getPose().getY());
+//        SmartDashboard.putNumber("drive pose/x", drive.getPose().getX());
+//        SmartDashboard.putNumber("drive pose/y", drive.getPose().getY());
     }
 
     private void updatePose() {
