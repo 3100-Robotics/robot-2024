@@ -92,6 +92,9 @@ public class RobotContainer {
     autoChooser.setDefaultOption("1.5 piece", one5Piece);
     autoChooser.addOption("1.5 piece front", one5PieceFront);
 
+    Command driveAuto = drive.createTrajectory("drive", false);
+    autoChooser.addOption("just drive", driveAuto);
+
     SmartDashboard.putData("auto chooser", autoChooser);
   }
 

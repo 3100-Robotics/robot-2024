@@ -109,7 +109,7 @@ public final class Constants {
     public static final double squisherSpeedTolerance = 0.5;
 
     public static final double laserCanDetectionTolerance = 100;
-    public static final double squisherShootSpeed = 1000;
+    public static final double squisherShootSpeed = 4000;
     public static final double pivotAmpPos = 90;
   }
 

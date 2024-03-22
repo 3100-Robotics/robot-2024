@@ -218,14 +218,12 @@ public class Drive extends SubsystemBase {
                 new HolonomicPathFollowerConfig(
                         new PIDConstants(5.0, 0.0, 0.0),
                         // Translation PID constants
-                        new PIDConstants(8,
-                                drive.swerveController.config.headingPIDF.i,
-                                drive.swerveController.config.headingPIDF.d),
+                        new PIDConstants(80,
+                                0,
+                                0),
                         1,
-
                         drive.swerveDriveConfiguration.getDriveBaseRadiusMeters(),
-                        new ReplanningConfig(true, true)
-                ),
+                        new ReplanningConfig(false, false)),
                 () -> {var alliance = DriverStation.getAlliance();
                     return alliance.filter(value -> value == DriverStation.Alliance.Red).isPresent();},
                 this);
