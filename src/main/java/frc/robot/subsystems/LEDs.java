@@ -118,15 +118,19 @@ public class LEDs extends SubsystemBase {
                     setColorRGB(state.getR(), state.getG(), state.getB());
                     if (Timer.getFPGATimestamp() - lastAnimUpdate >= state.getAnimationTime()) {
                         lastAnimUpdate = Timer.getFPGATimestamp();
-                        setState(Constants.LEDStates.nothing);
+                        setStateFunction(Constants.LEDStates.nothing);
                     }
                 }
             }
         }
     }
 
-    public void setState(Constants.LEDStates state) {
+    public void setStateFunction(Constants.LEDStates state) {
         this.state = state;
+    }
+
+    public Command setState(Constants.LEDStates state) {
+        return this.runOnce(() -> this.state = state);
     }
 }
 

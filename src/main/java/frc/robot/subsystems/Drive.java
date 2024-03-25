@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Camera;
 import frc.robot.Constants;
@@ -218,10 +219,10 @@ public class Drive extends SubsystemBase {
                 new HolonomicPathFollowerConfig(
                         new PIDConstants(5.0, 0.0, 0.0),
                         // Translation PID constants
-                        new PIDConstants(80,
+                        new PIDConstants(5,
                                 0,
                                 0),
-                        1,
+                        7,
                         drive.swerveDriveConfiguration.getDriveBaseRadiusMeters(),
                         new ReplanningConfig(false, false)),
                 () -> {var alliance = DriverStation.getAlliance();
@@ -244,9 +245,12 @@ public class Drive extends SubsystemBase {
     public Command loadChoreoTrajectory(String pathName, Boolean setOdomToStart) {
         PathPlannerPath path = PathPlannerPath.fromChoreoTrajectory(pathName);
 
+        Command auto = AutoBuilder.followPath(path);
+
         if (setOdomToStart)
         {
-            resetOdometry(new Pose2d(path.getPoint(0).position, getYaw()));
+//            resetOdometry(new Pose2d(path.getPoint(0).position, getYaw()));
+            return Commands.runOnce(() -> resetOdometry(new Pose2d(path.getPoint(0).position, getYaw()))).andThen(auto);
         }
 
         // Create a path following command using AutoBuilder. This will also trigger event markers.

@@ -65,17 +65,46 @@ public class RobotContainer {
 
   private void configureAutonomous() {
 
-    Command speakerCommand = Commands.sequence(
-            Commands.runOnce(() -> leds.setState(Constants.LEDStates.speaker)),
+    Command speakerCommand  = Commands.sequence(
+            leds.setState(Constants.LEDStates.speaker),
             cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-            cobra.setPivotPosCommand(() -> 1.260),//0.226
+            cobra.setPivotPosCommand(() -> 1.260));
+//            cobra.setIndexerCommand(() -> 0.5),
+//            Commands.waitSeconds(0.5),
+//            cobra.setSquisherAndIndexerCommand(() -> 0),
+//            leds.setState(Constants.LEDStates.nothing));
+
+    Command prepShootCommand = Commands.sequence(
             cobra.setIndexerCommand(() -> 0.5),
             Commands.waitSeconds(0.5),
             cobra.setSquisherAndIndexerCommand(() -> 0),
-//            cobra.setPivotCommand(() -> Constants.cobraConstants.pivotCollectAngle),
-            Commands.runOnce(() -> leds.setState(Constants.LEDStates.speaker)));
+            leds.setState(Constants.LEDStates.nothing));
+
+//    Command speakerCommand = Commands.sequence(
+//            drive.setShootingStatus(true),
+//            leds.setState(Constants.LEDStates.speaker),
+//            cobra.setSquisherCommand(() -> Constants.cobraConstants.squisherShootSpeed),
+//            cobra.setPivotPosCommand(drive::speakerShootAngle),
+//            cobra.setIndexerCommand(() -> 0.5),
+//            Commands.waitSeconds(0.75),
+//            cobra.setSquisherAndIndexerCommand(() -> 0),
+//            cobra.setPivotPosCommand(() -> Constants.cobraConstants.pivotCollectAngle),
+//            leds.setState(Constants.LEDStates.nothing),
+//            drive.setShootingStatus(false));
+
+//    Command speakerCommand = Commands.sequence(
+//            leds.setState(Constants.LEDStates.speaker),
+//            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
+//            cobra.setPivotPosCommand(() -> 1.260),//0.226
+//            cobra.setIndexerCommand(() -> 0.5),
+//            Commands.waitSeconds(0.5),
+//            cobra.setSquisherAndIndexerCommand(() -> 0),
+////            cobra.setPivotCommand(() -> Constants.cobraConstants.pivotCollectAngle),
+//            Commands.runOnce(() -> leds.setState(Constants.LEDStates.speaker)));
 
     NamedCommands.registerCommand("shoot", speakerCommand);
+
+    NamedCommands.registerCommand("prepshoot", prepShootCommand);
 
     NamedCommands.registerCommand("collect",
             cobra.cobraCollect(collector.collect(cobra::laserCan2Activated)));
@@ -94,6 +123,9 @@ public class RobotContainer {
 
     Command driveAuto = drive.createTrajectory("drive", false);
     autoChooser.addOption("just drive", driveAuto);
+
+    Command fourPiece = drive.loadChoreoTrajectory("3 piece", false);
+    autoChooser.addOption("3 piece", fourPiece);
 
     SmartDashboard.putData("auto chooser", autoChooser);
   }
