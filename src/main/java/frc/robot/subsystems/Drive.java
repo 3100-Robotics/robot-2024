@@ -162,6 +162,9 @@ public class Drive extends SubsystemBase {
                       Math.min(angle*-driveConstants.autoCollectTurnP, driveConstants.autoCollectMaxTurnVel),
                       false);
           }
+          else {
+              drive(new Translation2d(0, 0), 0, false);
+          }
       }).until(collected);
   }
 
