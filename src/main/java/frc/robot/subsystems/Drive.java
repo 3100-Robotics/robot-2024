@@ -214,6 +214,12 @@ public class Drive extends SubsystemBase {
       return shooterVel.plus(negVel).getAngle().getRadians();
     }
 
+    public Command rotateToSpeaker() {
+      return this.run(() -> drive(new Translation2d(driveConstants.autoCollectForwardVel, 0),
+              Math.min(speakerShootAngle()*-driveConstants.autoCollectTurnP, driveConstants.autoCollectMaxTurnVel),
+              false)).until(() -> speakerShootAngle() < 0.01);
+    }
+
     public Command setAutoRotationOverrideType(String type) {
       return this.runOnce(() -> autoRotationType = type);
     }
@@ -226,7 +232,7 @@ public class Drive extends SubsystemBase {
           PhotonTrackedTarget target = gamePieceCam.getBestTarget();
           double angle = 0;
           if (target != null) {
-              angle = target.getYaw();
+              angle = Math.min(target.getYaw()*-driveConstants.autoCollectTurnP, driveConstants.autoCollectMaxTurnVel);
               return Optional.of(new Rotation2d(Units.degreesToRadians(angle)));
           }
           else {

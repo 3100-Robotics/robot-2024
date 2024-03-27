@@ -17,6 +17,7 @@ import com.revrobotics.SparkPIDController;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -314,13 +315,7 @@ public class Cobra extends SubsystemBase {
                             double distanceFromSpeaker = speakerPose.getDistance(robotPose.get().getTranslation());
                             double height = Constants.Field.speakerZ - 0.48;
 
-                            return Math.tan(height/distanceFromSpeaker);
+                            return Units.radiansToRotations(Math.tan(height/distanceFromSpeaker)) - 0; // TODO: get the right offset for this
                         }));
-    }
-
-    public Command scoreAmp() {
-        return setPivotPosCommand(() -> cobraConstants.pivotAmpPos)
-                .andThen(setSquisherCommand(() -> 0.5))
-                .alongWith(setIndexerCommand(() -> 0.5));
     }
 }
