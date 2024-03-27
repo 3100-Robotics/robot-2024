@@ -24,8 +24,8 @@ public class RobotContainer {
   // The robot's subsystems and commands are defined here...
 
   public final Camera GamePieceCam = new Camera("objectDetector");
-  public final Camera frontTagCam = new Camera("front_arducam_OV9281", Constants.driveConstants.frontTagCamPose);
-  public final Camera backTagCam = new Camera("back_arducam_OV9281", Constants.driveConstants.backTagCamPose);
+  public final Camera frontTagCam = new Camera("back_arducam_OV9281", Constants.driveConstants.frontTagCamPose);
+  public final Camera backTagCam = new Camera("front_arducam_OV9281", Constants.driveConstants.backTagCamPose);
   public final Drive drive = new Drive(GamePieceCam, frontTagCam, backTagCam);
   public final Cobra cobra = new Cobra();
   public final Collector collector = new Collector();
@@ -65,14 +65,14 @@ public class RobotContainer {
 
   private void configureAutonomous() {
 
-    Command speakerCommand  = Commands.sequence(
-            leds.setState(Constants.LEDStates.speaker),
-            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-            cobra.setPivotPosCommand(() -> 1.260));
-//            cobra.setIndexerCommand(() -> 0.5),
-//            Commands.waitSeconds(0.5),
-//            cobra.setSquisherAndIndexerCommand(() -> 0),
-//            leds.setState(Constants.LEDStates.nothing));
+//    Command speakerCommand  = Commands.sequence(
+//            leds.setState(Constants.LEDStates.speaker),
+//            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
+//            cobra.setPivotPosCommand(() -> 1.260));
+////            cobra.setIndexerCommand(() -> 0.5),
+////            Commands.waitSeconds(0.5),
+////            cobra.setSquisherAndIndexerCommand(() -> 0),
+////            leds.setState(Constants.LEDStates.nothing));
 
     Command prepShootCommand = Commands.sequence(
             cobra.setIndexerCommand(() -> 0.5),
@@ -92,22 +92,23 @@ public class RobotContainer {
 //            leds.setState(Constants.LEDStates.nothing),
 //            drive.setShootingStatus(false));
 
-//    Command speakerCommand = Commands.sequence(
-//            leds.setState(Constants.LEDStates.speaker),
-//            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-//            cobra.setPivotPosCommand(() -> 1.260),//0.226
-//            cobra.setIndexerCommand(() -> 0.5),
-//            Commands.waitSeconds(0.5),
-//            cobra.setSquisherAndIndexerCommand(() -> 0),
-////            cobra.setPivotCommand(() -> Constants.cobraConstants.pivotCollectAngle),
-//            Commands.runOnce(() -> leds.setState(Constants.LEDStates.speaker)));
+    Command speakerCommand = Commands.sequence(
+            leds.setState(Constants.LEDStates.speaker),
+            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
+            cobra.setPivotPosCommand(() -> 1.260),//0.226
+            cobra.setIndexerCommand(() -> 0.5),
+            Commands.waitSeconds(0.5),
+            cobra.setSquisherAndIndexerCommand(() -> 0),
+//            cobra.setPivotCommand(() -> Constants.cobraConstants.pivotCollectAngle),
+            Commands.runOnce(() -> leds.setState(Constants.LEDStates.speaker)));
 
     NamedCommands.registerCommand("shoot", speakerCommand);
 
     NamedCommands.registerCommand("prepshoot", prepShootCommand);
 
     NamedCommands.registerCommand("collect",
-            cobra.cobraCollect(collector.collect(cobra::laserCan2Activated)));
+            cobra.cobraCollect(collector.collect(cobra::laserCan2Activated)).
+                    andThen(cobra.setSquisherAndIndexerCommand(() -> 0)));
 
 
     Command onePieceRun = drive.createTrajectory("1 piece", false);
@@ -121,11 +122,11 @@ public class RobotContainer {
     autoChooser.setDefaultOption("1.5 piece", one5Piece);
     autoChooser.addOption("1.5 piece front", one5PieceFront);
 
-    Command driveAuto = drive.createTrajectory("drive", false);
+    Command driveAuto = drive.loadChoreoTrajectory("drive", false);
     autoChooser.addOption("just drive", driveAuto);
 
-    Command fourPiece = drive.loadChoreoTrajectory("3 piece", false);
-    autoChooser.addOption("3 piece", fourPiece);
+    Command fourPiece = speakerCommand.andThen(drive.loadChoreoTrajectory("2 piece", false));
+    autoChooser.addOption("2 piece", fourPiece);
 
     SmartDashboard.putData("auto chooser", autoChooser);
   }
