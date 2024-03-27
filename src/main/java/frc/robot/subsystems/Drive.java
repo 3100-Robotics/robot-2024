@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Camera;
 import frc.robot.Constants;
 import frc.robot.Constants.driveConstants;
+import frc.robot.RobotContainer;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import swervelib.SwerveDrive;
@@ -42,6 +43,7 @@ public class Drive extends SubsystemBase {
     Camera frontTagCam;
     Camera backTagCam;
 
+    String autoRotationType = "normal";
 
     public Drive(Camera gamePieceCam, Camera frontTagCam, Camera backTagCam) {
         this.gamePieceCam = gamePieceCam;
@@ -209,7 +211,31 @@ public class Drive extends SubsystemBase {
       Translation2d negVel = new Translation2d(robotVel.vxMetersPerSecond, robotVel.vyMetersPerSecond).times(-1);
       Translation2d shooterVel = new Translation2d(1, angle);
 
-      return shooterVel.plus(negVel).getAngle().getDegrees();
+      return shooterVel.plus(negVel).getAngle().getRadians();
+    }
+
+    public Command setAutoRotationOverrideType(String type) {
+      return this.runOnce(() -> autoRotationType = type);
+    }
+
+    private Optional<Rotation2d> autoRotationOverride() {
+      if (autoRotationType.equals("speaker")) {
+          return Optional.of(new Rotation2d(speakerShootAngle()));
+      }
+      else if (autoRotationType.equals("object")) {
+          PhotonTrackedTarget target = gamePieceCam.getBestTarget();
+          double angle = 0;
+          if (target != null) {
+              angle = target.getYaw();
+              return Optional.of(new Rotation2d(Units.degreesToRadians(angle)));
+          }
+          else {
+              return Optional.empty();
+          }
+      }
+
+
+      return Optional.empty();
     }
 
     public void defineAutoBuilder() {
@@ -231,7 +257,7 @@ public class Drive extends SubsystemBase {
                     return alliance.filter(value -> value == DriverStation.Alliance.Red).isPresent();},
                 this);
 
-
+	    com.pathplanner.lib.controllers.PPHolonomicDriveController.setRotationTargetOverride(this::autoRotationOverride);
 	}
 
     public Command createTrajectory(String pathName, boolean setOdomToStart) {

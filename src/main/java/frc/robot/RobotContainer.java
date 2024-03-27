@@ -65,32 +65,18 @@ public class RobotContainer {
 
   private void configureAutonomous() {
 
-//    Command speakerCommand  = Commands.sequence(
-//            leds.setState(Constants.LEDStates.speaker),
-//            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-//            cobra.setPivotPosCommand(() -> 1.260));
-////            cobra.setIndexerCommand(() -> 0.5),
-////            Commands.waitSeconds(0.5),
-////            cobra.setSquisherAndIndexerCommand(() -> 0),
-////            leds.setState(Constants.LEDStates.nothing));
-
     Command prepShootCommand = Commands.sequence(
-            cobra.setIndexerCommand(() -> 0.5),
-            Commands.waitSeconds(0.5),
-            cobra.setSquisherAndIndexerCommand(() -> 0),
-            leds.setState(Constants.LEDStates.nothing));
+            drive.setAutoRotationOverrideType("speaker"),
+            leds.setState(Constants.LEDStates.speaker),
+            cobra.shootSpeaker(drive::getPose));
 
 //    Command speakerCommand = Commands.sequence(
-//            drive.setShootingStatus(true),
-//            leds.setState(Constants.LEDStates.speaker),
-//            cobra.setSquisherCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-//            cobra.setPivotPosCommand(drive::speakerShootAngle),
 //            cobra.setIndexerCommand(() -> 0.5),
 //            Commands.waitSeconds(0.75),
 //            cobra.setSquisherAndIndexerCommand(() -> 0),
 //            cobra.setPivotPosCommand(() -> Constants.cobraConstants.pivotCollectAngle),
 //            leds.setState(Constants.LEDStates.nothing),
-//            drive.setShootingStatus(false));
+//            drive.setAutoRotationOverrideType("normal"));
 
     Command speakerCommand = Commands.sequence(
             leds.setState(Constants.LEDStates.speaker),
@@ -106,9 +92,10 @@ public class RobotContainer {
 
     NamedCommands.registerCommand("prepshoot", prepShootCommand);
 
-    NamedCommands.registerCommand("collect",
-            cobra.cobraCollect(collector.collect(cobra::laserCan2Activated)).
-                    andThen(cobra.setSquisherAndIndexerCommand(() -> 0)));
+    NamedCommands.registerCommand("collect", Commands.sequence(
+            drive.setAutoRotationOverrideType("object"),
+            cobra.cobraCollect(collector.collect(cobra::laserCan2Activated)),
+            cobra.setSquisherAndIndexerCommand(() -> 0)));
 
 
     Command onePieceRun = drive.createTrajectory("1 piece", false);

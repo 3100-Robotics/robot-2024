@@ -315,9 +315,7 @@ public class Cobra extends SubsystemBase {
                             double height = Constants.Field.speakerZ - 0.48;
 
                             return Math.tan(height/distanceFromSpeaker);
-                        }),
-                        Commands.waitUntil(this::atSquisherSetpoint),
-                        setIndexerCommand(() -> 0.5));
+                        }));
     }
 
     public Command scoreAmp() {
