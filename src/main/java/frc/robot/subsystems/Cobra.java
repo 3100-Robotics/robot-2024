@@ -315,7 +315,7 @@ public class Cobra extends SubsystemBase {
                             double distanceFromSpeaker = speakerPose.getDistance(robotPose.get().getTranslation());
                             double height = Constants.Field.speakerZ - 0.48;
 
-                            return Units.radiansToRotations(Math.tan(height/distanceFromSpeaker)) - 0; // TODO: get the right offset for this
+                            return Units.radiansToRotations(Math.tan(height/distanceFromSpeaker)) -0.86;
                         }));
     }
 }

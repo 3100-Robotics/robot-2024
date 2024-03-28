@@ -54,7 +54,7 @@ public final class Constants {
       public static final double STEERING_ENCODER_RESOLUTION = 1;
 
       public static final double autoCollectForwardVel = 1.2;
-      public static final double autoCollectTurnP = 4;
+      public static final double autoCollectTurnP = 5;
       public static final double autoCollectMaxTurnVel = 200;
   }
 

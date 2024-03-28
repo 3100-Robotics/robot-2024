@@ -68,17 +68,19 @@ public class RobotContainer {
     Command prepShootCommand = Commands.sequence(
             drive.setAutoRotationOverrideType("speaker"),
             leds.setState(Constants.LEDStates.speaker),
-            cobra.shootSpeaker(drive::getPose));
-
-//    Command speakerCommand = Commands.sequence(
-//            cobra.setIndexerCommand(() -> 0.5),
-//            Commands.waitSeconds(0.75),
-//            cobra.setSquisherAndIndexerCommand(() -> 0),
-//            cobra.setPivotPosCommand(() -> Constants.cobraConstants.pivotCollectAngle),
-//            leds.setState(Constants.LEDStates.nothing),
-//            drive.setAutoRotationOverrideType("normal"));
+            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
+            cobra.setPivotPosCommand(() -> 1.260));
+//            cobra.shootSpeaker(drive::getPose));
 
     Command speakerCommand = Commands.sequence(
+            cobra.setIndexerCommand(() -> 0.5),
+            Commands.waitSeconds(0.75),
+            cobra.setSquisherAndIndexerCommand(() -> 0),
+            cobra.setPivotPosCommand(() -> Constants.cobraConstants.pivotCollectAngle),
+            leds.setState(Constants.LEDStates.nothing),
+            drive.setAutoRotationOverrideType("normal"));
+
+    Command firstShoot = Commands.sequence(
             leds.setState(Constants.LEDStates.speaker),
             cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
             cobra.setPivotPosCommand(() -> 1.260),//0.226
@@ -112,7 +114,7 @@ public class RobotContainer {
     Command driveAuto = drive.loadChoreoTrajectory("drive", false);
     autoChooser.addOption("just drive", driveAuto);
 
-    Command fourPiece = speakerCommand.andThen(drive.loadChoreoTrajectory("2 piece", false));
+    Command fourPiece = firstShoot.andThen(drive.loadChoreoTrajectory("2 piece", false));
     autoChooser.addOption("2 piece", fourPiece);
 
     SmartDashboard.putData("auto chooser", autoChooser);
@@ -186,11 +188,6 @@ public class RobotContainer {
             cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
             cobra.setPivotPosCommand(() -> 1.260)));
 
-    driverController.b().onTrue(Commands.sequence(
-            Commands.runOnce(() -> leds.setState(Constants.LEDStates.speaker)),
-            cobra.setSquisherVelCommand(() -> Constants.cobraConstants.squisherShootSpeed),
-            cobra.setPivotPosCommand(() -> 1.226)));
-
     coDriverController.a().whileTrue(collector.setCommand(() -> 0.5));
 
 
@@ -205,6 +202,8 @@ public class RobotContainer {
             Commands.waitSeconds(0.75),
             cobra.setSquisherAndIndexerCommand(() -> 0),
             cobra.setPivotPosCommand(() -> Constants.cobraConstants.pivotCollectAngle)));
+
+    driverController.b().whileTrue(drive.rotateToSpeaker());
   }
 
   /**
