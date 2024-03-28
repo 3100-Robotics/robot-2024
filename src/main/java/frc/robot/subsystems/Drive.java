@@ -86,7 +86,8 @@ public class Drive extends SubsystemBase {
         drive.updateOdometry();
 //        SmartDashboard.putNumber("drive pose/x", drive.getPose().getX());
 //        SmartDashboard.putNumber("drive pose/y", drive.getPose().getY());
-        SmartDashboard.putNumber("robot needed angle", speakerShootAngle());
+        SmartDashboard.putNumber("robot needed angle", (speakerShootAngle()-getPose().getRotation().getRadians())*50);
+        SmartDashboard.putNumber("robot angle", getPose().getRotation().getRadians());
     }
 
     private void updatePose() {
@@ -195,102 +196,40 @@ public class Drive extends SubsystemBase {
     }
 
     public double speakerShootAngle() {
-//      Pose2d robotPose = getPose();
-//      ChassisSpeeds robotVel = drive.getRobotVelocity();
-//      Translation2d speakerPose;
-//      if (DriverStation.getAlliance().isPresent()) {
-//          if (DriverStation.getAlliance().get().equals(DriverStation.Alliance.Blue)){
-//              speakerPose = new Translation2d(0, Constants.Field.blueSpeakerY);
-//          }
-//          else{
-//              speakerPose = new Translation2d(0, Constants.Field.redSpeakerY);
-//          }
-//      }
-//      else {
-//          speakerPose = new Translation2d(0, Constants.Field.blueSpeakerY);
-//      }
-//
-//      Translation2d speakerRelativePose = robotPose.getTranslation().minus(speakerPose);
-//      double angle = Math.tan(speakerRelativePose.getX()/speakerRelativePose.getY());
-////      Translation2d negVel = new Translation2d(robotVel.vxMetersPerSecond, robotVel.vyMetersPerSecond).times(-1);
-////      Translation2d shooterVel = new Translation2d(1, angle);
-//
-////      return shooterVel.plus(negVel).getAngle().getRadians();
-//        return angle;
+      Pose2d robotPose = getPose();
+      ChassisSpeeds robotVel = drive.getRobotVelocity();
+      Translation2d speakerPose;
+      if (DriverStation.getAlliance().isPresent()) {
+          if (DriverStation.getAlliance().get().equals(DriverStation.Alliance.Blue)){
+              speakerPose = new Translation2d(Constants.Field.speakerX, Constants.Field.blueSpeakerY);
+          }
+          else{
+              speakerPose = new Translation2d(Constants.Field.speakerX, Constants.Field.redSpeakerY);
+          }
+      }
+      else {
+          speakerPose = new Translation2d(Constants.Field.speakerX, Constants.Field.blueSpeakerY);
+      }
 
+      Translation2d speakerRelativePose = robotPose.getTranslation().minus(speakerPose);
+      double angle;
 
+      if (speakerRelativePose.getY() > 0) {
+          angle = Math.atan(speakerRelativePose.getX() / speakerRelativePose.getY());
+      }
+      else {
+          angle = -Math.atan(speakerRelativePose.getX() / speakerRelativePose.getY());
+      }
+//      Translation2d negVel = new Translation2d(robotVel.vxMetersPerSecond, robotVel.vyMetersPerSecond).times(-1);
+//      Translation2d shooterVel = new Translation2d(1, angle);
 
-        Pose2d dtvalues = this.getPose();
-        Optional<Alliance> alliance = DriverStation.getAlliance();
-        double shootingSpeed = Constants.cobraConstants.squisherShootSpeed;
-        double deltaX, deltaY, speakerDist, shootingTime, currentXSpeed, currentYSpeed;
-        Translation2d targetOffset;
-
-        //triangle for robot angle
-        if (alliance.isPresent() && alliance.get() == Alliance.Red) {
-            deltaY = Math.abs(dtvalues.getY() - Constants.Field.redSpeakerY);
-        } else {
-            deltaY = Math.abs(dtvalues.getY() - Constants.Field.redSpeakerY);
-        }
-        deltaX = Math.abs(dtvalues.getY() - Constants.Field.speakerX);
-        speakerDist = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
-        // SmartDashboard.putNumber("dist to speakre", speakerDist);
-
-        Rotation2d unadjustedAngle = Rotation2d.fromRadians(Math.asin(deltaX/speakerDist));
-        double totalDistToSpeaker = Math.sqrt(Math.pow(Constants.Field.speakerZ-0.48, 2) + Math.pow(speakerDist, 2));
-        shootingTime = totalDistToSpeaker/shootingSpeed; //calculates how long the note will take to reach the target
-        currentXSpeed = drive.getRobotVelocity().vxMetersPerSecond;
-        currentYSpeed = drive.getRobotVelocity().vyMetersPerSecond;
-        targetOffset = new Translation2d(currentXSpeed*shootingTime*5*unadjustedAngle.getRadians(), currentYSpeed*shootingTime*5);
-        //line above calculates how much our current speed will affect the ending location of the note if it's in the air for ShootingTime
-
-        //next 3 lines set where we actually want to aim, given the offset our shooting will have based on our speed
-        int correctionDirection;
-        double speakerY;
-        if(DriverStation.getAlliance().get() == Alliance.Blue) {
-            correctionDirection = 1;
-            speakerY = Constants.Field.blueSpeakerY;
-        } else {
-            correctionDirection = -1;
-            speakerY = Constants.Field.blueSpeakerY;
-        }
-        double offsetSpeakerY = speakerY+(targetOffset.getY()*correctionDirection);
-        double offsetSpeakerX = Constants.Field.speakerX+(targetOffset.getX()*correctionDirection);
-        double offsetDeltaX = Math.abs(dtvalues.getX() - offsetSpeakerX);
-        double offsetDeltaY = Math.abs(dtvalues.getY() - offsetSpeakerY);
-
-        Translation2d adjustedTarget = new Translation2d(offsetSpeakerX, offsetSpeakerY);
-        double offsetSpeakerdist = Math.sqrt(Math.pow(offsetDeltaY, 2) + Math.pow(offsetDeltaX, 2));
-        SmartDashboard.putNumber("offsetSpeakerDis", offsetSpeakerdist);
-        // SmartDashboard.putString("offset amount", targetOffset.toString());
-        // SmartDashboard.putString("offset speaker location", new Translation2d(offsetSpeakerX, offsetSpeakerY).toString());
-        double m_desiredRobotAngle;
-        //getting desired robot angle
-        if (alliance.get() == Alliance.Blue) {
-            if (dtvalues.getY() >= adjustedTarget.getY()) {
-                double thetaAbove = -Math.toDegrees(Math.asin(offsetDeltaX / offsetSpeakerdist))-90;
-                m_desiredRobotAngle = thetaAbove;
-            }
-            else{
-                double thetaBelow = Math.toDegrees(Math.asin(offsetDeltaX / offsetSpeakerdist))+90;
-                m_desiredRobotAngle = thetaBelow;
-            } } else {
-            if (dtvalues.getY() >= adjustedTarget.getY()) {
-                double thetaAbove = Math.toDegrees(Math.asin(offsetDeltaX / offsetSpeakerdist))-90;
-                m_desiredRobotAngle = thetaAbove;
-            }
-            else{
-                double thetaBelow = -Math.toDegrees(Math.asin(offsetDeltaX / offsetSpeakerdist))+90;
-                m_desiredRobotAngle = thetaBelow;
-            }
-        }
-        SmartDashboard.putString("adjusted target", adjustedTarget.toString());
-        return m_desiredRobotAngle;
+//      return shooterVel.plus(negVel).getAngle().getRadians();
+        return angle;
     }
 
     public Command rotateToSpeaker() {
       return this.run(() -> drive(new Translation2d(0, 0),
-              Math.min(speakerShootAngle()*50, driveConstants.autoCollectMaxTurnVel),
+              (speakerShootAngle()-getYaw().getRadians())*50,
               false));
     }
 
